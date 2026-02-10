@@ -20,6 +20,17 @@ def draw_board():
     for row in range(8):
         for col in range(8):
             color = white if (row + col) % 2 == 0 else black
-            pygame.draw.rect(screen, color, (col * square_size, row * square_size, square_size, square_size))   
+            pygame.draw.rect(screen, color, (col * square_size, row * square_size, square_size, square_size)) 
+
+def draw_pieces():
+    for square in chess.SQUARES:
+        piece = board.piece_at(square)
+        if piece:
+            pieceImg = pygame.image.load(f'assets/{piece.symbol()}.png')
+            pieceImg = pygame.transform.scale(pieceImg, (square_size, square_size))
+            row = 7 - (square // 8)
+            col = square % 8
+            screen.blit(pieceImg, (col * square_size, row * square_size))
+        
         
         
