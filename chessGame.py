@@ -31,6 +31,23 @@ def draw_pieces():
             row = 7 - (square // 8)
             col = square % 8
             screen.blit(pieceImg, (col * square_size, row * square_size))
+            
+def main():
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+        draw_board()
+        draw_pieces()
+        pygame.display.flip()
+        clock.tick(30)
+    pygame.quit()
+    sys.exit()
+    
+if __name__ == "__main__":
+    main()
+
         
         
         
