@@ -6,6 +6,20 @@ import chess.svg
 width = 640
 height = 640
 square_size = width // 8
+piece_to_file = {
+    "P": "P2.png",
+    "N": "N2.png",
+    "B": "B2.png",
+    "R": "R2.png",
+    "Q": "Q2.png",
+    "K": "K2.png",
+    "p": "p.png",
+    "n": "n.png",
+    "b": "b.png",
+    "r": "r.png",
+    "q": "q.png",
+    "k": "k.png"
+}
 
 white = (240,217,181)
 black = (181,136,99)
@@ -26,7 +40,8 @@ def draw_pieces():
     for square in chess.SQUARES:
         piece = board.piece_at(square)
         if piece:
-            pieceImg = pygame.image.load(f'assets/{piece.symbol()}.png')
+            filename = piece_to_file[piece.symbol()]
+            pieceImg = pygame.image.load(f'assets/{filename}')
             pieceImg = pygame.transform.scale(pieceImg, (square_size, square_size))
             row = 7 - (square // 8)
             col = square % 8
