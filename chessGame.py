@@ -66,6 +66,21 @@ def main():
                 row = 7 - (y // square_size)
                 clicked_square = chess.square(col, row)
                 
+                if selected_square is None:
+                    piece = board.piece_at(clicked_square)
+                    
+                    if piece and piece.color == board.turn:
+                        selected_square = clicked_square
+                    
+                elif selected_square is not None: 
+                    move = chess.Move(selected_square, clicked_square) 
+                    if move in board.legal_moves : 
+                        make_move(move)
+                        if board.is_checkmate(): 
+                            print("Checkmate! Game Over.")
+                        if board.is_stalemate(): 
+                            print("Stalemate! Game Over.")
+                    selected_square = None
         draw_board()
         draw_pieces()
         pygame.display.flip()
