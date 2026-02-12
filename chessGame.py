@@ -47,12 +47,25 @@ def draw_pieces():
             col = square % 8
             screen.blit(pieceImg, (col * square_size, row * square_size))
             
+def make_move(move):
+    if move in board.legal_moves:
+        board.push(move)
+
+            
 def main():
+    selected_square = None
     running = True
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+                
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                x,y = pygame.mouse.get_pos()
+                col = x // square_size  
+                row = 7 - (y // square_size)
+                clicked_square = chess.square(col, row)
+                
         draw_board()
         draw_pieces()
         pygame.display.flip()
