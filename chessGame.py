@@ -21,8 +21,8 @@ piece_to_file = {
     "k": "k.png"
 }
 
-white = (240,217,181)
-black = (181,136,99)
+white = (237, 237, 237)
+black = (137,207,240)
 
 pygame.init()
 screen = pygame.display.set_mode((width, height))
@@ -49,17 +49,34 @@ def draw_pieces():
             col = square % 8
             screen.blit(pieceImg, (col * square_size, row * square_size))
 
-def display_turn():
+def display_turn(val1, val2):
     font = pygame.font.SysFont(None, 36)
     if board.turn == chess.WHITE: 
         text = font.render("White's Turn", True, (255,255,255))
-    else: 
+    if board.turn == chess.BLACK: 
         text = font.render("Black's Turn", True, (255,255,255)) 
-    screen.blit(text, (650, 20))
+    if board.is_check():
+        text = font.render("Check!", True, (255, 0, 0)) 
+    if board.is_checkmate():
+        if board.turn == chess.WHITE:
+            text = font.render("Black Wins!", True, (255, 0, 0))
+        else:
+            text = font.render("White Wins!", True, (255, 0, 0))
+    if board.is_stalemate():
+        text = font.render("Stalemate!", True, (255, 0, 0)) 
+    screen.blit(text, (val1, val2))
     
 def draw_sidebar():
     pygame.draw.rect(screen, (0, 0, 0), (640, 0, panel_width, height))
     
+def draw_bottom_box():
+    box_width = 200
+    box_height = 150
+    x = 640 + 10
+    y = 640 - box_height - 10
+    
+    pygame.draw.rect(screen, (0, 0, 0), (x, y, box_width, box_height))
+    display_turn(x+10,y+10)
   
 def display_move_history():
     font = pygame.font.SysFont(None, 24)
@@ -77,7 +94,7 @@ def display_move_history():
 
         move_number = len(san_moves) - i
         text = font.render(f" Move {move_number} : {san}", True, (255, 255, 255))
-        screen.blit(text, (650, 60 + i * 30))
+        screen.blit(text, (650, 20 + i * 30))
             
 def highlight_square(square, color):
     row = 7 - (square // 8)
@@ -122,11 +139,12 @@ def main():
                         if board.is_stalemate(): 
                             print("Stalemate! Game Over.")
                     selected_square = None
+                    
         draw_board()
         highlight_square(clicked_square, higlight_color) if selected_square is not None else None
         draw_pieces()
         draw_sidebar()
-        display_turn()
+        draw_bottom_box()
         display_move_history()
         pygame.display.flip()
         clock.tick(30)
