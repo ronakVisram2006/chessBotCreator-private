@@ -47,11 +47,7 @@ def draw_pieces():
             col = square % 8
             screen.blit(pieceImg, (col * square_size, row * square_size))
             
-def make_move(move):
-    if move in board.legal_moves:
-        board.push(move)
-
-            
+        
 def main():
     selected_square = None
     running = True
@@ -66,16 +62,23 @@ def main():
                 row = 7 - (y // square_size)
                 clicked_square = chess.square(col, row)
                 
-                if selected_square is None:
-                    piece = board.piece_at(clicked_square)
-                    
+                if selected_square is None: 
+                    piece = board.piece_at(clicked_square)  
                     if piece and piece.color == board.turn:
                         selected_square = clicked_square
                     
                 elif selected_square is not None: 
+                    m_piece = board.piece_at(clicked_square)
                     move = chess.Move(selected_square, clicked_square) 
+                    if piece.piece_type == chess.PAWN :
+                        target_rank = chess.square_rank(clicked_square)
+                        promotion_rank = 7 if piece.color == chess.WHITE else 0
+                        
+                        if target_rank == promotion_rank:
+                            move = chess.Move(selected_square, clicked_square, promotion=chess.QUEEN)
+
                     if move in board.legal_moves : 
-                        make_move(move)
+                        board.push(move)
                         if board.is_checkmate(): 
                             print("Checkmate! Game Over.")
                         if board.is_stalemate(): 
