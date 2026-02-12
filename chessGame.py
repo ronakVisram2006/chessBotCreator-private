@@ -28,6 +28,8 @@ pygame.init()
 screen = pygame.display.set_mode((width, height))
 pygame.display.set_caption('Chess Game')
 clock = pygame.time.Clock()
+panel_width = 200
+screen = pygame.display.set_mode((width + panel_width, height))
 
 board = chess.Board()
 def draw_board():
@@ -46,6 +48,18 @@ def draw_pieces():
             row = 7 - (square // 8)
             col = square % 8
             screen.blit(pieceImg, (col * square_size, row * square_size))
+
+def display_turn():
+    font = pygame.font.SysFont(None, 36)
+    if board.turn == chess.WHITE: 
+        text = font.render("White's Turn", True, (255,255,255))
+    else: 
+        text = font.render("Black's Turn", True, (255,255,255)) 
+    screen.blit(text, (650, 20))
+    
+def draw_sidebar():
+    pygame.draw.rect(screen, (0, 0, 0), (640, 0, panel_width, height))
+
             
 def highlight_square(square, color):
     row = 7 - (square // 8)
@@ -93,6 +107,8 @@ def main():
         draw_board()
         highlight_square(clicked_square, higlight_color) if selected_square is not None else None
         draw_pieces()
+        draw_sidebar()
+        display_turn()
         pygame.display.flip()
         clock.tick(30)
     pygame.quit()
