@@ -78,7 +78,8 @@ def draw_bottom_box():
     pygame.draw.rect(screen, (0, 0, 0), (x, y, box_width, box_height))
     display_turn(x+10,y+10)
   
-def display_move_history():
+def display_move_history(scroll_offset):
+
     font = pygame.font.SysFont(None, 24)
     temp_board = chess.Board() 
 
@@ -90,11 +91,27 @@ def display_move_history():
         temp_board.push(move)
         
     new_sans = san_moves[::-1]
-    for i, san in enumerate(new_sans[:20]):
+    text2 = font.render("Move History", True, (255, 255, 255))
+    screen.blit(text2, (650, 10))
+    MAX_TOP = 40
+    MAX_BOTTOM = 640 - 200
+    Allowed = MAX_BOTTOM - MAX_TOP
+    content_height = len(new_sans) * 30
+    
+    max_scroll = 0
+    min_scroll = min(0, Allowed - content_height)
+    scroll_offset = max(min_scroll, min(max_scroll, scroll_offset))
+    
+    for i, san in enumerate(new_sans[:50]):
 
         move_number = len(san_moves) - i
-        text = font.render(f" Move {move_number} : {san}", True, (255, 255, 255))
-        screen.blit(text, (650, 20 + i * 30))
+        y = 40 + i * 30 + scroll_offset
+        if MAX_TOP <= y <= MAX_BOTTOM:
+            text = font.render(f"{move_number}. {san}", True, (255, 255, 255))
+            screen.blit(text, (650, y))
+        
+    return scroll_offset
+
             
 def highlight_square(square, color):
     row = 7 - (square // 8)
@@ -102,6 +119,7 @@ def highlight_square(square, color):
     pygame.draw.rect(screen, color, (col * square_size, row * square_size, square_size, square_size), 5)
         
 def main():
+    scroll_offset = 0
     higlight_color = (255, 255, 0)
     selected_square = None
     running = True
@@ -110,11 +128,15 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
                 
+            if event.type == pygame.MOUSEWHEEL:
+                scroll_offset += event.y * 20 
+                
             if event.type == pygame.MOUSEBUTTONDOWN:
                 x,y = pygame.mouse.get_pos()
                 col = x // square_size  
                 row = 7 - (y // square_size)
                 clicked_square = chess.square(col, row)
+                
                 
                 if selected_square is None: 
                     piece = board.piece_at(clicked_square)
@@ -145,7 +167,7 @@ def main():
         draw_pieces()
         draw_sidebar()
         draw_bottom_box()
-        display_move_history()
+        scroll_ofset = display_move_history(scroll_offset)
         pygame.display.flip()
         clock.tick(30)
     pygame.quit()
