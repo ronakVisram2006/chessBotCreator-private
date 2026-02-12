@@ -59,7 +59,25 @@ def display_turn():
     
 def draw_sidebar():
     pygame.draw.rect(screen, (0, 0, 0), (640, 0, panel_width, height))
+    
+  
+def display_move_history():
+    font = pygame.font.SysFont(None, 24)
+    temp_board = chess.Board() 
 
+    moves = list(board.move_stack)
+    san_moves = []
+
+    for move in moves:
+        san_moves.append(temp_board.san(move))
+        temp_board.push(move)
+        
+    new_sans = san_moves[::-1]
+    for i, san in enumerate(new_sans[:20]):
+
+        move_number = len(san_moves) - i
+        text = font.render(f" Move {move_number} : {san}", True, (255, 255, 255))
+        screen.blit(text, (650, 60 + i * 30))
             
 def highlight_square(square, color):
     row = 7 - (square // 8)
@@ -109,6 +127,7 @@ def main():
         draw_pieces()
         draw_sidebar()
         display_turn()
+        display_move_history()
         pygame.display.flip()
         clock.tick(30)
     pygame.quit()
