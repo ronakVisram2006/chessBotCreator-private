@@ -47,8 +47,13 @@ def draw_pieces():
             col = square % 8
             screen.blit(pieceImg, (col * square_size, row * square_size))
             
+def highlight_square(square, color):
+    row = 7 - (square // 8)
+    col = square % 8
+    pygame.draw.rect(screen, color, (col * square_size, row * square_size, square_size, square_size), 5)
         
 def main():
+    higlight_color = (255, 255, 0)
     selected_square = None
     running = True
     while running:
@@ -63,11 +68,12 @@ def main():
                 clicked_square = chess.square(col, row)
                 
                 if selected_square is None: 
-                    piece = board.piece_at(clicked_square)  
+                    piece = board.piece_at(clicked_square)
                     if piece and piece.color == board.turn:
                         selected_square = clicked_square
                     
                 elif selected_square is not None: 
+                    
                     m_piece = board.piece_at(clicked_square)
                     move = chess.Move(selected_square, clicked_square) 
                     if piece.piece_type == chess.PAWN :
@@ -85,6 +91,7 @@ def main():
                             print("Stalemate! Game Over.")
                     selected_square = None
         draw_board()
+        highlight_square(clicked_square, higlight_color) if selected_square is not None else None
         draw_pieces()
         pygame.display.flip()
         clock.tick(30)
