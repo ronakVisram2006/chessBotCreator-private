@@ -159,6 +159,15 @@ def main():
                             "N": chess.KNIGHT
                         }[piece_symbol]
 
+                        move = chess.Move(from_sq, to_sq, promotion=promo_piece)
+                        board.push(move)
+
+                        promotion_mode = False
+                        promotion_square = None
+                        selected_square = None
+                        selected_piece = None
+                        break
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
