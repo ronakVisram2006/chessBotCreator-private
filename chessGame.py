@@ -89,7 +89,7 @@ def display_move_history(scroll_offset):
     for move in moves:
         san_moves.append(temp_board.san(move))
         temp_board.push(move)
-        
+
     new_sans = san_moves[::-1]
     text2 = font.render("Move History", True, (255, 255, 255))
     screen.blit(text2, (650, 10))
@@ -102,7 +102,7 @@ def display_move_history(scroll_offset):
     min_scroll = min(0, Allowed - content_height)
     scroll_offset = max(min_scroll, min(max_scroll, scroll_offset))
     
-    for i, san in enumerate(new_sans[:50]):
+    for i, san in enumerate(new_sans[:150]):
 
         move_number = len(san_moves) - i
         y = 40 + i * 30 + scroll_offset
@@ -122,6 +122,8 @@ def main():
     scroll_offset = 0
     higlight_color = (255, 255, 0)
     selected_square = None
+    selected_piece = None
+    clicked_square = None
     running = True
     while running:
         for event in pygame.event.get():
@@ -136,21 +138,20 @@ def main():
                 col = x // square_size  
                 row = 7 - (y // square_size)
                 clicked_square = chess.square(col, row)
-                
-                
-                if selected_square is None: 
+
+                if selected_square is None:
                     piece = board.piece_at(clicked_square)
                     if piece and piece.color == board.turn:
                         selected_square = clicked_square
-                    
-                elif selected_square is not None: 
-                    
-                    m_piece = board.piece_at(clicked_square)
-                    move = chess.Move(selected_square, clicked_square) 
-                    if piece.piece_type == chess.PAWN :
+                        selected_piece = piece
+                else:
+                    move = chess.Move(selected_square, clicked_square)
+
+                    # Use selected_piece, not piece
+                    if selected_piece.piece_type == chess.PAWN:
                         target_rank = chess.square_rank(clicked_square)
-                        promotion_rank = 7 if piece.color == chess.WHITE else 0
-                        
+                        promotion_rank = 7 if selected_piece.color == chess.WHITE else 0
+
                         if target_rank == promotion_rank:
                             move = chess.Move(selected_square, clicked_square, promotion=chess.QUEEN)
 
@@ -161,9 +162,11 @@ def main():
                         if board.is_stalemate(): 
                             print("Stalemate! Game Over.")
                     selected_square = None
+                    selected_piece = None
                     
         draw_board()
-        highlight_square(clicked_square, higlight_color) if selected_square is not None else None
+        if selected_square is not None and clicked_square is not None and x < 640:
+            highlight_square(clicked_square, higlight_color)
         draw_pieces()
         draw_sidebar()
         draw_bottom_box()
