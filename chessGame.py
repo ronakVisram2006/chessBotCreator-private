@@ -68,6 +68,9 @@ def display_turn(val1, val2):
     
 def draw_sidebar():
     pygame.draw.rect(screen, (0, 0, 0), (640, 0, panel_width, height))
+
+def draw_overbar():
+    pygame.draw.rect(screen, (30, 30, 30), (0, 0, 150, height))
     
 def draw_bottom_box():
     box_width = 200
@@ -112,20 +115,50 @@ def display_move_history(scroll_offset):
         
     return scroll_offset
 
+def draw_promotion_menu():
+    font = pygame.font.SysFont(None, 32)
+    pieces = ["Q", "R", "B", "N"]
+    labels = ["Queen", "Rook", "Bishop", "Knight"]
+
+    for i, label in enumerate(labels):
+        y = 50 + i * 80
+        pygame.draw.rect(screen, (80, 80, 80), (10, y, 130, 60))
+        text = font.render(label, True, (255, 255, 255))
+        screen.blit(text, (20, y + 15))
+
+
             
 def highlight_square(square, color):
     row = 7 - (square // 8)
     col = square % 8
     pygame.draw.rect(screen, color, (col * square_size, row * square_size, square_size, square_size), 5)
-        
+
 def main():
     scroll_offset = 0
     higlight_color = (255, 255, 0)
     selected_square = None
     selected_piece = None
     clicked_square = None
+    promotion_mode = False
+    promotion_square = None
     running = True
     while running:
+        if promotion_mode and event.type == pygame.MOUSEBUTTONDOWN:
+            x, y = pygame.mouse.get_pos()
+
+            if x < 150:  # inside left bar
+                options = ["Q", "R", "B", "N"]
+                for i, piece_symbol in enumerate(options):
+                    box_y = 50 + i * 80
+                    if box_y <= y <= box_y + 60:
+                        from_sq, to_sq = promotion_square
+                        promo_piece = {
+                            "Q": chess.QUEEN,
+                            "R": chess.ROOK,
+                            "B": chess.BISHOP,
+                            "N": chess.KNIGHT
+                        }[piece_symbol]
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -153,9 +186,11 @@ def main():
                         promotion_rank = 7 if selected_piece.color == chess.WHITE else 0
 
                         if target_rank == promotion_rank:
-                            move = chess.Move(selected_square, clicked_square, promotion=chess.QUEEN)
+                            promotion_mode = True
+                            promotion_square = (selected_square, clicked_square)
+                            continue
 
-                    if move in board.legal_moves : 
+                    if move in board.legal_moves :
                         board.push(move)
                         if board.is_checkmate(): 
                             print("Checkmate! Game Over.")
@@ -171,6 +206,13 @@ def main():
         draw_sidebar()
         draw_bottom_box()
         scroll_ofset = display_move_history(scroll_offset)
+        if promotion_mode:
+            draw_overbar()
+            draw_promotion_menu()
+        else:
+            draw_sidebar()
+            draw_bottom_box()
+            scroll_offset = display_move_history(scroll_offset)
         pygame.display.flip()
         clock.tick(30)
     pygame.quit()
