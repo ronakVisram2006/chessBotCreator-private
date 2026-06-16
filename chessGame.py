@@ -30,6 +30,17 @@ PIECE_VAL = {
     chess.KING: 100
 }
 
+KNIGHT_TABLE = [
+    -5,-4,-3,-3,-3,-3,-4,-5,
+    -4,-2, 0, 0, 0, 0,-2,-4,
+    -3, 0, 1, 1.5,1.5,1, 0,-3,
+    -3,0.5,1.5,2,2,1.5,0.5,-3,
+    -3, 0,1.5,2,2,1.5,0,-3,
+    -3,0.5,1,1.5,1.5,1,0.5,-3,
+    -4,-2,0,0.5,0.5,0,-2,-4,
+    -5,-4,-3,-3,-3,-3,-4,-5
+]
+
 white = (237, 237, 237)
 black = (137,207,240)
 
@@ -156,7 +167,14 @@ def evaluate(board):
         piece = board.piece_at(square)
         if piece:
             value = PIECE_VAL[piece.piece_type]
-            score += value if piece.color == chess.WHITE else -value
+            if piece.piece_type == chess.KNIGHT and piece.color == chess.WHITE:
+                value += KNIGHT_TABLE[square]
+            elif piece.piece_type == chess.KNIGHT and piece.color == chess.BLACK:
+                value += KNIGHT_TABLE[chess.square_mirror(square)]
+            if piece.color == chess.WHITE:
+                score += value
+            else:
+                score -= value
     return score
     
 def minimax(board, depth, maximising, alpha=float('-inf'), beta=float('inf')):
@@ -167,7 +185,7 @@ def minimax(board, depth, maximising, alpha=float('-inf'), beta=float('inf')):
         best = float('-inf')
         for move in board.legal_moves:
             board.push(move)
-            score = minimax(board, depth - 1, False)  
+            score = minimax(board, depth - 1, False, alpha, beta)  
             board.pop()
             best = max(best, score)
             alpha = max(alpha, best)
@@ -178,7 +196,7 @@ def minimax(board, depth, maximising, alpha=float('-inf'), beta=float('inf')):
         best = float('inf')
         for move in board.legal_moves:
             board.push(move)
-            score = minimax(board, depth - 1, True)     
+            score = minimax(board, depth - 1, True, alpha, beta)     
             board.pop()
             best = min(best, score)
             beta = min(beta, best)
@@ -195,6 +213,8 @@ def get_best_move(board, depth):
         board.push(move)
         score = minimax(board, depth - 1, not is_white_turn)
         board.pop()
+        
+        print(move, score)
         adjusted = score if is_white_turn else -score
         if adjusted > best_score:
             best_score = adjusted
@@ -287,7 +307,6 @@ def main():
                     selected_square = None
                     selected_piece = None
 
-        # fix 5: bot runs once after human move, not every frame
         if bot_needs_to_move and not board.is_game_over() and board.turn == chess.BLACK:
             move = get_best_move(board, depth=3)
             if move:
