@@ -21,6 +21,15 @@ piece_to_file = {
     "k": "k.png"
 }
 
+PIECE_VAL = {
+    chess.PAWN: 10,
+    chess.KNIGHT: 31,
+    chess.BISHOP: 32,
+    chess.ROOK: 50,
+    chess.QUEEN: 90,
+    chess.KING: 100
+}
+
 white = (237, 237, 237)
 black = (137,207,240)
 
@@ -118,12 +127,15 @@ def display_move_history(scroll_offset):
 def draw_promotion_menu():
     font = pygame.font.SysFont(None, 32)
     pieces = ["Q", "R", "B", "N"]
-    labels = ["Queen", "Rook", "Bishop", "Knight"]
+    if board.turn == chess.WHITE:
+        labels = ["Q2.png","B2.png","N2.png","R2.png"]
+    else:
+        labels = ["q2.png","b2.png","n2.png","r2.png"]
 
     for i, label in enumerate(labels):
         y = 50 + i * 80
         pygame.draw.rect(screen, (80, 80, 80), (10, y, 130, 60))
-        text = font.render(label, True, (255, 255, 255))
+        text = font.render(label, True, (200, 200, 255))
         screen.blit(text, (20, y + 15))
 
 
@@ -132,6 +144,57 @@ def highlight_square(square, color):
     row = 7 - (square // 8)
     col = square % 8
     pygame.draw.rect(screen, color, (col * square_size, row * square_size, square_size, square_size), 5)
+    
+def evaluate(board):
+    if board.is_checkmate():
+        return float('-inf') if board.turn == chess.WHITE else float('inf')
+    elif board.is_stalemate():
+        return 0
+
+    score = 0
+    for square in chess.SQUARES:
+        piece = board.piece_at(square)
+        if piece:
+            value = PIECE_VAL[piece.piece_type]
+            score += value if piece.color == chess.WHITE else -value
+    return score
+    
+def minimax(board, depth, maximising):
+    if depth == 0 or board.is_game_over():
+            return evaluate(board)
+
+    if maximising:
+        best = float('-inf')
+        for move in board.legal_moves:
+            board.push(move)
+            score = minimax(board, depth - 1, False)  
+            board.pop()
+            best = max(best, score)
+        return best
+    else:
+        best = float('inf')
+        for move in board.legal_moves:
+            board.push(move)
+            score = minimax(board, depth - 1, True)     
+            board.pop()
+            best = min(best, score)
+        return best
+
+def get_best_move(board, depth):
+    best_move = None
+    best_score = float('-inf')
+    is_white_turn = board.turn == chess.WHITE
+
+    for move in board.legal_moves:
+        board.push(move)
+        score = minimax(board, depth - 1, not is_white_turn)
+        board.pop()
+        adjusted = score if is_white_turn else -score
+        if adjusted > best_score:
+            best_score = adjusted
+            best_move = move
+
+    return best_move
 
 def main():
     scroll_offset = 0
@@ -180,6 +243,8 @@ def main():
                 col = x // square_size  
                 row = 7 - (y // square_size)
                 clicked_square = chess.square(col, row)
+                
+
 
                 if selected_square is None:
                     piece = board.piece_at(clicked_square)
@@ -222,6 +287,10 @@ def main():
             draw_sidebar()
             draw_bottom_box()
             scroll_offset = display_move_history(scroll_offset)
+        if not board.is_game_over() and board.turn == chess.BLACK:
+            move = get_best_move(board, depth=3)
+            if move:
+                board.push(move)
         pygame.display.flip()
         clock.tick(30)
     pygame.quit()
