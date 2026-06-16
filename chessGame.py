@@ -198,53 +198,59 @@ def get_best_move(board, depth):
 
 def main():
     scroll_offset = 0
-    higlight_color = (255, 255, 0)
+    highlight_color = (255, 255, 0)
     selected_square = None
     selected_piece = None
     clicked_square = None
+    x, y = 0, 0  
     promotion_mode = False
     promotion_square = None
+    bot_needs_to_move = False  
     running = True
+
     while running:
-        if promotion_mode and event.type == pygame.MOUSEBUTTONDOWN:
-            x, y = pygame.mouse.get_pos()
-
-            if x < 150:  # inside left bar
-                options = ["Q", "R", "B", "N"]
-                for i, piece_symbol in enumerate(options):
-                    box_y = 50 + i * 80
-                    if box_y <= y <= box_y + 60:
-                        from_sq, to_sq = promotion_square
-                        promo_piece = {
-                            "Q": chess.QUEEN,
-                            "R": chess.ROOK,
-                            "B": chess.BISHOP,
-                            "N": chess.KNIGHT
-                        }[piece_symbol]
-
-                        move = chess.Move(from_sq, to_sq, promotion=promo_piece)
-                        board.push(move)
-
-                        promotion_mode = False
-                        promotion_square = None
-                        selected_square = None
-                        selected_piece = None
-                        break
-
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-                
-            if event.type == pygame.MOUSEWHEEL:
-                scroll_offset += event.y * 20 
-                
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                x,y = pygame.mouse.get_pos()
-                col = x // square_size  
-                row = 7 - (y // square_size)
-                clicked_square = chess.square(col, row)
-                
 
+            if event.type == pygame.MOUSEWHEEL:
+                scroll_offset += event.y * 20
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                x, y = pygame.mouse.get_pos()
+
+                if promotion_mode:
+                    if x < 150:
+                        options = ["Q", "R", "B", "N"]
+                        for i, piece_symbol in enumerate(options):
+                            box_y = 50 + i * 80
+                            if box_y <= y <= box_y + 60:
+                                from_sq, to_sq = promotion_square
+                                promo_piece = {
+                                    "Q": chess.QUEEN,
+                                    "R": chess.ROOK,
+                                    "B": chess.BISHOP,
+                                    "N": chess.KNIGHT
+                                }[piece_symbol]
+                                board.push(chess.Move(from_sq, to_sq, promotion=promo_piece))
+                                promotion_mode = False
+                                promotion_square = None
+                                selected_square = None
+                                selected_piece = None
+                                bot_needs_to_move = True 
+                                break
+                    continue  
+                
+                if x >= 640:
+                    continue
+
+                col = x // square_size
+                row = 7 - (y // square_size)
+
+                if not (0 <= col <= 7 and 0 <= row <= 7):
+                    continue
+
+                clicked_square = chess.square(col, row)
 
                 if selected_square is None:
                     piece = board.piece_at(clicked_square)
@@ -254,47 +260,55 @@ def main():
                 else:
                     move = chess.Move(selected_square, clicked_square)
 
-                    # Use selected_piece, not piece
                     if selected_piece.piece_type == chess.PAWN:
                         target_rank = chess.square_rank(clicked_square)
                         promotion_rank = 7 if selected_piece.color == chess.WHITE else 0
-
                         if target_rank == promotion_rank:
                             promotion_mode = True
                             promotion_square = (selected_square, clicked_square)
+                            selected_square = None
+                            selected_piece = None
                             continue
 
-                    if move in board.legal_moves :
+                    if move in board.legal_moves:
                         board.push(move)
-                        if board.is_checkmate(): 
+                        if board.is_checkmate():
                             print("Checkmate! Game Over.")
-                        if board.is_stalemate(): 
+                        if board.is_stalemate():
                             print("Stalemate! Game Over.")
+                        bot_needs_to_move = True  
+
                     selected_square = None
                     selected_piece = None
-                    
-        draw_board()
-        if selected_square is not None and clicked_square is not None and x < 640:
-            highlight_square(clicked_square, higlight_color)
-        draw_pieces()
-        draw_sidebar()
-        draw_bottom_box()
-        scroll_ofset = display_move_history(scroll_offset)
-        if promotion_mode:
-            draw_overbar()
-            draw_promotion_menu()
-        else:
-            draw_sidebar()
-            draw_bottom_box()
-            scroll_offset = display_move_history(scroll_offset)
-        if not board.is_game_over() and board.turn == chess.BLACK:
+
+        # fix 5: bot runs once after human move, not every frame
+        if bot_needs_to_move and not board.is_game_over() and board.turn == chess.BLACK:
             move = get_best_move(board, depth=3)
             if move:
                 board.push(move)
+            bot_needs_to_move = False
+
+        # Drawing
+        draw_board()
+        if selected_square is not None and clicked_square is not None and x < 640:
+            highlight_square(clicked_square, highlight_color)
+        draw_pieces()
+        draw_sidebar()
+        draw_bottom_box()
+        scroll_offset = display_move_history(scroll_offset)  
+        if promotion_mode:
+            draw_overbar()
+            draw_promotion_menu()
+
         pygame.display.flip()
         clock.tick(30)
+
     pygame.quit()
     sys.exit()
     
 if __name__ == "__main__":
     main()
+
+        
+        
+        
