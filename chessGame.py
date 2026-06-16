@@ -159,7 +159,7 @@ def evaluate(board):
             score += value if piece.color == chess.WHITE else -value
     return score
     
-def minimax(board, depth, maximising):
+def minimax(board, depth, maximising, alpha=float('-inf'), beta=float('inf')):
     if depth == 0 or board.is_game_over():
             return evaluate(board)
 
@@ -170,6 +170,9 @@ def minimax(board, depth, maximising):
             score = minimax(board, depth - 1, False)  
             board.pop()
             best = max(best, score)
+            alpha = max(alpha, best)
+            if alpha >= beta:
+                break
         return best
     else:
         best = float('inf')
@@ -178,6 +181,9 @@ def minimax(board, depth, maximising):
             score = minimax(board, depth - 1, True)     
             board.pop()
             best = min(best, score)
+            beta = min(beta, best)
+            if beta <= alpha:
+                break
         return best
 
 def get_best_move(board, depth):
