@@ -41,6 +41,28 @@ KNIGHT_TABLE = [
     -5,-4,-3,-3,-3,-3,-4,-5
 ]
 
+BISHOP_TABLE = [
+    -2,-1,-1,-1,-1,-1,-1,-2,
+    -1,0,0,0,0,0,0,-1,
+    -1,0,0.5,1,1,0.5,0,-1,
+    -1,0.5,1,1.5,1.5,1,0.5,-1,
+    -1,0.5,1,1.5,1.5,1,0.5,-1,
+    -1,0,0.5,1,1,0.5,0,-1,
+    -1,0,0,0,0,0,0,-1,
+    -2,-1,-1,-1,-1,-1,-1,-2
+]
+
+PAWN_TABLE = [
+     0, 0, 0, 0, 0, 0, 0, 0,
+     5, 5, 5, 5, 5, 5, 5, 5,
+     1, 1, 2, 3, 3, 2, 1, 1,
+     0, 0, 0, 5, 5, 0, 0, 0,
+     1, 0, 1, 2, 2, 1, 0, 1,
+     1, 1, 1,-2,-2, 1, 1, 1,
+     1, 1, 1, 0, 0, 1, 1, 1,
+     0, 0, 0, 0, 0, 0, 0, 0,
+]
+
 white = (237, 237, 237)
 black = (137,207,240)
 
@@ -164,6 +186,8 @@ def evaluate(board):
 
     score = 0
     for square in chess.SQUARES:
+        CENTER = [chess.D4, chess.E4, chess.D5, chess.E5]
+
         piece = board.piece_at(square)
         if piece:
             value = PIECE_VAL[piece.piece_type]
@@ -171,6 +195,20 @@ def evaluate(board):
                 value += KNIGHT_TABLE[square]
             elif piece.piece_type == chess.KNIGHT and piece.color == chess.BLACK:
                 value += KNIGHT_TABLE[chess.square_mirror(square)]
+                
+            if piece.piece_type == chess.BISHOP and piece.color == chess.WHITE:
+                value += BISHOP_TABLE[square]
+            elif piece.piece_type == chess.BISHOP and piece.color == chess.BLACK:
+                value += BISHOP_TABLE[chess.square_mirror(square)]
+                
+            if piece.piece_type == chess.PAWN:
+                if square in CENTER:
+                    value += 5
+                if piece.color == chess.WHITE:
+                    value += PAWN_TABLE[square]
+                elif piece.color == chess.BLACK:
+                    value += PAWN_TABLE[chess.square_mirror(square)]
+                
             if piece.color == chess.WHITE:
                 score += value
             else:
