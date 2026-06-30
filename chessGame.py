@@ -42,6 +42,17 @@ ROOK_TABLE = [
     0,  0,  5,  5,  5,  5,  0,  0
 ]
 
+QUEEN_TABLE = [
+    -20,-10,-10, -5, -5,-10,-10,-20,
+    -10,  0,  0,  0,  0,  0,  0,-10,
+        -10,  0,  5,  5,  5,  5,  0,-10,
+        -5,  0,  5,  5,  5,  5,  0, -5,
+        0,  0,  5,  5,  5,  5,  0, -5,
+        -10,  5,  5,  5,  5,  5,  0,-10,
+    -10,  0,  5,  0,  0,  0,  0,-10,
+    -20,-10,-10, -5, -5,-10,-10,-20
+]
+
 
 KNIGHT_TABLE = [
     -5,-4,-3,-3,-3,-3,-4,-5,
@@ -197,6 +208,13 @@ def evaluate(board):
     elif board.is_stalemate():
         return 0
 
+    if board.is_repetition(3):
+        print("Draw by threefold repetition")
+        return 0
+
+    if board.is_repetition(2):
+        return -50 if board.turn == chess.WHITE else 50
+
     score = 0
     CENTER = {chess.D4, chess.E4, chess.D5, chess.E5}
     DEV_WHITE = {chess.C3, chess.D3, chess.E3, chess.F3, chess.C4, chess.F4}
@@ -219,6 +237,12 @@ def evaluate(board):
                     value += ROOK_TABLE[square]
                 else:
                     value += ROOK_TABLE[chess.square_mirror(square)]
+                    
+            if piece.piece_type == chess.QUEEN:
+                if piece.color == chess.WHITE:
+                    value += QUEEN_TABLE[square]
+                else:
+                    value += QUEEN_TABLE[chess.square_mirror(square)]
 
             if piece.piece_type == chess.PAWN:
                 if square in CENTER:
@@ -249,15 +273,47 @@ def move_order_score(board, move):
         return 5  
     return 0
 
+def quiescence(board, alpha, beta, maximising =True):
+    stand_pat = evaluate(board)
+    
+    if maximising:
+        if stand_pat >= beta:
+            return beta
+        alpha = max(alpha, stand_pat)
+    else:
+        if stand_pat <= alpha:
+            return alpha
+        beta = min(beta, stand_pat)
+        
+    captures = [move for move in board.legal_moves if board.is_capture(move)]
+    captures.sort(key=lambda m: move_order_score(board, m), reverse=True)
+    
+    for move in captures:
+        board.push(move)
+        score = quiescence(board, alpha, beta, not maximising)
+        board.pop()
+        
+        if maximising:
+            if score >= beta:
+                return beta
+            alpha = max(alpha, score)
+        else:
+            if score <= alpha:
+                return alpha
+            beta = min(beta, score)
+            
+    return alpha if maximising else beta
     
 def minimax(board, depth, maximising, alpha=float('-inf'), beta=float('inf')):
-    if depth == 0 or board.is_game_over(claim_draw=False):
-            return evaluate(board)
-        
+    if board.is_game_over(claim_draw=False):
+        return evaluate(board)
+    if depth == 0:
+        return quiescence(board, alpha, beta, maximising)
+
     key = (chess.polyglot.zobrist_hash(board), depth, maximising)
     if key in transposition_table:
         return transposition_table[key]
-        
+
     moves = list(board.legal_moves)
     moves.sort(key=lambda m: move_order_score(board, m), reverse=True)
 
@@ -265,26 +321,25 @@ def minimax(board, depth, maximising, alpha=float('-inf'), beta=float('inf')):
         best = float('-inf')
         for move in moves:
             board.push(move)
-            score = minimax(board, depth - 1, False, alpha, beta)  
+            score = minimax(board, depth - 1, False, alpha, beta)
             board.pop()
             best = max(best, score)
             alpha = max(alpha, best)
             if alpha >= beta:
                 break
-        return best
     else:
         best = float('inf')
         for move in moves:
             board.push(move)
-            score = minimax(board, depth - 1, True, alpha, beta)     
+            score = minimax(board, depth - 1, True, alpha, beta)
             board.pop()
             best = min(best, score)
             beta = min(beta, best)
             if beta <= alpha:
                 break
-            
-        transposition_table[key] = best
-        return best
+
+    transposition_table[key] = best
+    return best
 
 def get_best_move(board, depth):
     best_move = None
