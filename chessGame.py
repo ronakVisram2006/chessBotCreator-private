@@ -22,13 +22,24 @@ piece_to_file = {
 }
 
 PIECE_VAL = {
-    chess.PAWN: 10,
+    chess.PAWN: 20,
     chess.KNIGHT: 31,
     chess.BISHOP: 32,
-    chess.ROOK: 50,
+    chess.ROOK: 40,
     chess.QUEEN: 90,
     chess.KING: 100
 }
+ROOK_TABLE = [
+    0,  0,  0,  5,  5,  0,  0,  0,
+    0, 10, 10, 10, 10, 10, 10,  0,
+    0, 10, 15, 15, 15, 15, 10,  0,
+    5, 10, 15, 20, 20, 15, 10,  5,
+    5, 10, 15, 20, 20, 15, 10,  5,
+    0, 10, 15, 15, 15, 15, 10,  0,
+    0, 10, 10, 10, 10, 10, 10,  0,
+    0,  0,  5,  5,  5,  5,  0,  0
+]
+
 
 KNIGHT_TABLE = [
     -5,-4,-3,-3,-3,-3,-4,-5,
@@ -192,15 +203,21 @@ def evaluate(board):
         if piece:
             value = PIECE_VAL[piece.piece_type]
             if piece.piece_type == chess.KNIGHT and piece.color == chess.WHITE:
-                value += KNIGHT_TABLE[square]
+                value += KNIGHT_TABLE[square] * 0.25
             elif piece.piece_type == chess.KNIGHT and piece.color == chess.BLACK:
-                value += KNIGHT_TABLE[chess.square_mirror(square)]
-                
+                value += KNIGHT_TABLE[chess.square_mirror(square)] * 0.25
+
             if piece.piece_type == chess.BISHOP and piece.color == chess.WHITE:
-                value += BISHOP_TABLE[square]
+                value += BISHOP_TABLE[square] * 0.5
             elif piece.piece_type == chess.BISHOP and piece.color == chess.BLACK:
-                value += BISHOP_TABLE[chess.square_mirror(square)]
+                value += BISHOP_TABLE[chess.square_mirror(square)]*0.5
                 
+            if piece.piece_type == chess.ROOK:
+                if piece.color == chess.WHITE:
+                    value += ROOK_TABLE[square]
+                else:
+                    value += ROOK_TABLE[chess.square_mirror(square)]
+
             if piece.piece_type == chess.PAWN:
                 if square in CENTER:
                     value += 5
@@ -208,6 +225,12 @@ def evaluate(board):
                     value += PAWN_TABLE[square]
                 elif piece.color == chess.BLACK:
                     value += PAWN_TABLE[chess.square_mirror(square)]
+            if piece.piece_type in [chess.KNIGHT, chess.BISHOP] and piece.color == chess.WHITE:
+                if square in [chess.C3, chess.D3, chess.E3, chess.F3, chess.C4, chess.F4]:
+                    value += 3
+            elif piece.piece_type in [chess.KNIGHT, chess.BISHOP] and piece.color == chess.BLACK:
+                if square in [chess.C6, chess.D6, chess.E6, chess.F6, chess.C5, chess.F5]:
+                    value += 3
                 
             if piece.color == chess.WHITE:
                 score += value
