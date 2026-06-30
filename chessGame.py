@@ -2,7 +2,9 @@ import pygame
 import sys
 import chess
 import chess.svg
+import chess.polyglot
 
+transposition_table = {}
 width = 640
 height = 640
 square_size = width // 8
@@ -196,10 +198,10 @@ def evaluate(board):
         return 0
 
     score = 0
-    for square in chess.SQUARES:
-        CENTER = [chess.D4, chess.E4, chess.D5, chess.E5]
-
-        piece = board.piece_at(square)
+    CENTER = {chess.D4, chess.E4, chess.D5, chess.E5}
+    DEV_WHITE = {chess.C3, chess.D3, chess.E3, chess.F3, chess.C4, chess.F4}
+    DEV_BLACK = {chess.C6, chess.D6, chess.E6, chess.F6, chess.C5, chess.F5}
+    for square, piece in board.piece_map().items():
         if piece:
             value = PIECE_VAL[piece.piece_type]
             if piece.piece_type == chess.KNIGHT and piece.color == chess.WHITE:
@@ -237,14 +239,31 @@ def evaluate(board):
             else:
                 score -= value
     return score
+
+def move_order_score(board, move):
+    if board.is_capture(move):
+        victim = board.piece_at(move.to_square)
+        attacker = board.piece_at(move.from_square)
+        if victim and attacker:
+            return PIECE_VAL[victim.piece_type] - PIECE_VAL[attacker.piece_type] * 0.1
+        return 5  
+    return 0
+
     
 def minimax(board, depth, maximising, alpha=float('-inf'), beta=float('inf')):
-    if depth == 0 or board.is_game_over():
+    if depth == 0 or board.is_game_over(claim_draw=False):
             return evaluate(board)
+        
+    key = (chess.polyglot.zobrist_hash(board), depth, maximising)
+    if key in transposition_table:
+        return transposition_table[key]
+        
+    moves = list(board.legal_moves)
+    moves.sort(key=lambda m: move_order_score(board, m), reverse=True)
 
     if maximising:
         best = float('-inf')
-        for move in board.legal_moves:
+        for move in moves:
             board.push(move)
             score = minimax(board, depth - 1, False, alpha, beta)  
             board.pop()
@@ -255,7 +274,7 @@ def minimax(board, depth, maximising, alpha=float('-inf'), beta=float('inf')):
         return best
     else:
         best = float('inf')
-        for move in board.legal_moves:
+        for move in moves:
             board.push(move)
             score = minimax(board, depth - 1, True, alpha, beta)     
             board.pop()
@@ -263,25 +282,29 @@ def minimax(board, depth, maximising, alpha=float('-inf'), beta=float('inf')):
             beta = min(beta, best)
             if beta <= alpha:
                 break
+            
+        transposition_table[key] = best
         return best
 
 def get_best_move(board, depth):
     best_move = None
     best_score = float('-inf')
     is_white_turn = board.turn == chess.WHITE
+    alpha = float('-inf')
 
     for move in board.legal_moves:
         board.push(move)
-        score = minimax(board, depth - 1, not is_white_turn)
+        score = minimax(board, depth - 1, not is_white_turn, alpha, float('inf'))
         board.pop()
-        
-        print(move, score)
+
         adjusted = score if is_white_turn else -score
         if adjusted > best_score:
             best_score = adjusted
             best_move = move
+            alpha = max(alpha, best_score)
 
     return best_move
+
 
 def main():
     scroll_offset = 0
