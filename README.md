@@ -71,13 +71,12 @@ move = get_best_move(board, depth=3)
 
 Higher depths play better but take noticeably longer per move in Python.
 
-## Possible improvements
+## Possible improvements (will implement soon)
 
 - Let the player choose their colour
 - Add a difficulty selector (search depth) in the UI
 - Iterative deepening with a time limit per move
 - Store bound types (exact / lower / upper) in the transposition table for more accurate cached scores
-- Opening book support via `chess.polyglot`
 - Show piece icons in the promotion menu instead of text labels
 - Add a king safety and endgame evaluation
 
